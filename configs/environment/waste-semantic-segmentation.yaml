@@ -1,6 +1,0 @@
-name: waste-semantic-segmentation
-channels:
-  - conda-forge
-  - defaults
-dependencies:
-  - python=3.10

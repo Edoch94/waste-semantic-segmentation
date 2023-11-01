@@ -5,8 +5,8 @@ hydra:
   #   dir: .
 
 defaults: # last one wins
-  - _self_
-  - cfg_folder_1: option_1
-  - cfg_folder_2: option_1
-  - override hydra/job_logging: custom
-  - env_variables: env_1
+- _self_
+- data: data
+- model/ENet/ENet
+- env_variables: env_1
+- override hydra/job_logging: custom

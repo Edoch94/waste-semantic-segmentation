@@ -1,0 +1,32 @@
+version: 0.0.1
+
+train:
+  stage:
+    encoder:
+      totrain: true
+      pretrained_encoder: ''
+    decoder:
+      totrain: false
+
+  input:
+    batch_size: 16
+    img_size: [224, 448]
+    gpu_id: [0]
+    num_workers: 12
+    resume: '' # TODO it's a path
+
+  learning_rate:
+    lr: 0.0005 # 5e-4
+    lr_decay: 0.995
+    num_epoch_lr_decay: 1 # epochs
+    weight_decay: 0.0002 # 2e-4
+    max_epoch: 200
+    label_weight: [1, 1] # torch.FloatTensor([1,1])
+
+test:
+  gpu_id: 0
+
+validation:
+  batch_size: 16
+  num_workers: 12
+  sample_rate: 1

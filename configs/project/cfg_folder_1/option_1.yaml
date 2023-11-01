@@ -1,9 +1,0 @@
-config_1: config_1_value
-
-config_2:
-  # First element of list
-  - first_key: first_value_first_key
-    second_key: first_value_second_key
-  # Second element of list
-  - first_key: second_value_first_key
-    second_key: second_value_second_key
