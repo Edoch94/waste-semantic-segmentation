@@ -4,9 +4,11 @@
   # run:
   #   dir: .
 
+
 defaults: # last one wins
 - _self_
 - data: data
-- model/ENet/ENet
-- env_variables: env_1
+- model: ENet
+- version: v0.0.1
+- model_version: ${model}_${version}
 - override hydra/job_logging: custom
