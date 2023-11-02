@@ -1,4 +1,4 @@
-hydra:
+# hydra:
   # verbose: true
   # output_subdir: null  
   # run:
