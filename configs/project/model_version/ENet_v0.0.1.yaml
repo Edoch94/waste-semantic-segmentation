@@ -3,15 +3,12 @@ train:
   stage:
     encoder:
       totrain: true
-      pretrained_encoder: ''
+      pretrained: ''
     decoder:
       totrain: false
 
   input:
     batch_size: 16
-    img_size: [224, 448]
-    gpu_id: [0]
-    num_workers: 12
     resume: '' # TODO it's a path
 
   learning_rate:
@@ -19,13 +16,13 @@ train:
     lr_decay: 0.995
     num_epoch_lr_decay: 1 # epochs
     weight_decay: 0.0002 # 2e-4
-    max_epoch: 200
     label_weight: [1, 1] # torch.FloatTensor([1,1])
-
-test:
-  gpu_id: 0
+  num_workers: 12
+  max_epoch: 10 #200
 
 validation:
-  batch_size: 16
+  input:
+    batch_size: 12
+    sample_rate: 1
+
   num_workers: 12
-  sample_rate: 1

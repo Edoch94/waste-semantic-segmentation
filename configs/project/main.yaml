@@ -4,6 +4,7 @@
   # run:
   #   dir: .
 
+gpu: [0]
 
 defaults: # last one wins
 - _self_

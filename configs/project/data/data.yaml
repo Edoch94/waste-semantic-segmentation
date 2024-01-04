@@ -1,10 +1,11 @@
-dataset: city
 ignore_label: 255
 ignore_label_to_train_id: 19
-mean_std:
-- [0.485, 0.456, 0.406]
-- [0.229, 0.224, 0.225]
+normalization_mean: [0.485, 0.456, 0.406]
+normalization_std: [0.229, 0.224, 0.225]
+scaling_factor: 0.875
+padding: 0
 num_classes: 1
+img_size: [224, 448]
 
 defaults:
 - dataset: dataset_simple
