@@ -5,6 +5,9 @@ hydra:
   sweep:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
     subdir: ${model.name}_${model.name}__${hydra.job.num}
+  sweeper:
+    params:
+      model.version: v0.0.1,v0.0.2
 
 
 gpu: [0]
@@ -14,6 +17,4 @@ defaults: # last one wins
 - _self_
 - data: data
 - model: ENet
-- version: [v0.0.1, v0.0.2]
-- model_version: ${model}_${version}
 - override hydra/job_logging: custom
