@@ -60,3 +60,9 @@ tensorboard_run:
 # Main run targets
 main_run:
 	poetry run python main.py
+
+job_config_check:
+	poetry run python main.py --cfg job
+
+hydra_config_check:
+	poetry run python main.py --cfg hydra

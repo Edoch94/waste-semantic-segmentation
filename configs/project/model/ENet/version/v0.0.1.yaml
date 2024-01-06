@@ -20,7 +20,7 @@ train:
     weight_decay: 0.0002 # 2e-4
     label_weight: [1, 1] # torch.FloatTensor([1,1])
   num_workers: 12
-  max_epoch: 20 #200
+  max_epoch: 5 #200
 
 validation:
   input:

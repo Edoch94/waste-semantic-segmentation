@@ -1,5 +1,0 @@
-# @package _global_
-hydra:
-  sweeper:
-    params:
-      ++model.train.stage.encoder.totrain: true,false

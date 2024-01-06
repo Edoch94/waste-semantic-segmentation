@@ -1,0 +1,6 @@
+# @package _global_.model
+name: ENet
+
+defaults:
+- version: v0.0.1
+- experiment: grid_search

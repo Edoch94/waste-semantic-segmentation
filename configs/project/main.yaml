@@ -4,15 +4,13 @@ hydra:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
-    subdir: ${model.name}_${model.name}__${hydra.job.num}
-
+    subdir: ${hydra.job.override_dirname}
 
 gpu: [0]
 tensorboard_log_dir: tensorboard_logs
 
 defaults: # last one wins
 - _self_
-- data: data
-- model: ENet
-- experiment: grid_search
+- data/data
+- model/ENet/ENet
 - override hydra/job_logging: custom
