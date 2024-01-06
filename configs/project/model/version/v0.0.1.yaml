@@ -1,4 +1,6 @@
 # @package _global_.model
+version: v0.0.1
+
 train:
   stage:
     encoder:

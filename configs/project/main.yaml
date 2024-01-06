@@ -1,13 +1,10 @@
 hydra:
-  output_subdir:
+  mode: MULTIRUN
   run:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
     subdir: ${model.name}_${model.name}__${hydra.job.num}
-  sweeper:
-    params:
-      model.version: v0.0.1,v0.0.2
 
 
 gpu: [0]
@@ -17,4 +14,5 @@ defaults: # last one wins
 - _self_
 - data: data
 - model: ENet
+- experiment: grid_search
 - override hydra/job_logging: custom
