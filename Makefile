@@ -1,4 +1,4 @@
-.PHONY: format
+.PHONY: create_env prod_env dev_env format lint_check lint_fix lint_and_format initialize_precommit autoupdate_precommit address_conflicts run_tensorboard
 
 
 ENV_PATH := ./configs/environment/
@@ -19,6 +19,9 @@ prod_env:
 
 dev_env:
 	poetry install
+
+genereate_requirements:
+	poetry export --without-hashes -f requirements.txt -o requirements.txt
 
 
 # Linting targets
@@ -47,3 +50,13 @@ autoupdate_precommit:
 address_conflicts:
 	git fetch
 	git merge
+
+
+# Tensorboard targets
+tensorboard_run:
+	poetry run tensorboard --logdir=outputs
+
+
+# Main run targets
+main_run:
+	poetry run python main.py

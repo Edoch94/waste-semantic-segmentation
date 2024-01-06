@@ -2,7 +2,7 @@
 train:
   stage:
     encoder:
-      totrain: true
+      totrain: false
       pretrained: ''
     decoder:
       totrain: false

@@ -160,7 +160,7 @@ cython_debug/
 #.idea/
 
 # Hydra
-outputs/
+# outputs/
 
 # Ruff
 .ruff_cache/

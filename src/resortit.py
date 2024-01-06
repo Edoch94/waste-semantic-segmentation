@@ -4,21 +4,18 @@ import numpy as np
 from PIL import Image
 from torch.utils import data
 
-DATA_PATH = './data/raw/dataset_simple'
-
-processed_train_path = os.path.join(DATA_PATH, 'train')
-processed_val_path = os.path.join(DATA_PATH, 'val')
-
 
 def default_loader(path):
     return Image.open(path)
 
 
-def make_dataset(mode):
+def make_dataset(mode, dataset_path):
     images = []
+    processed_train_path = os.path.join(dataset_path, 'train')
+    processed_val_path = os.path.join(dataset_path, 'val')
     if mode == 'train':
         processed_train_img_path = processed_train_path
-        processed_train_mask_path = DATA_PATH
+        processed_train_mask_path = dataset_path
         for img_name in os.listdir(processed_train_img_path):
             item = (
                 os.path.join(processed_train_img_path, img_name),
@@ -27,7 +24,7 @@ def make_dataset(mode):
             images.append(item)
     elif mode == 'val':
         processed_val_img_path = processed_val_path
-        processed_val_mask_path = DATA_PATH
+        processed_val_mask_path = dataset_path
         for img_name in os.listdir(processed_val_img_path):
             item = (
                 os.path.join(processed_val_img_path, img_name),
@@ -39,15 +36,21 @@ def make_dataset(mode):
 
 class resortit(data.Dataset):
     def __init__(
-        self, mode, simul_transform=None, transform=None, target_transform=None
+        self,
+        mode,
+        dataset_path: str,
+        simul_transform=None,
+        transform=None,
+        target_transform=None,
     ):
-        self.imgs = make_dataset(mode)
+        self.imgs = make_dataset(mode=mode, dataset_path=dataset_path)
         if len(self.imgs) == 0:
             raise (RuntimeError('Found 0 images, please check the data set'))
         self.loader = default_loader
         self.simul_transform = simul_transform
         self.transform = transform
         self.target_transform = target_transform
+        self.dataset_path = dataset_path
 
     def __getitem__(self, index):
         img_path, mask_path = self.imgs[index]

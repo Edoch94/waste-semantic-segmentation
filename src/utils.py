@@ -3,8 +3,11 @@ import shutil
 import time
 
 import numpy as np
+import torch
 import torch.nn.functional as F
+from fvcore.nn.flop_count import FlopCountAnalysis
 from torch import nn
+from torch.utils.data import DataLoader
 
 
 class Timer:
@@ -124,3 +127,18 @@ def scores(label_trues, label_preds, n_class):
         'FreqW Acc : \t': fwavacc,
         'Mean IoU : \t': mean_iu,
     }, cls_iu
+
+
+def save_model_FLOPS(
+    model: nn.Module, dataloader_training: DataLoader
+) -> tuple[int, int]:
+    torch_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    train_loader = dataloader_training
+    input_enet = next(iter(train_loader))[0].to(torch_device)
+    model = model.to(torch_device)
+
+    total_params = sum(p.numel() for p in model.parameters())
+
+    flops = FlopCountAnalysis(model, input_enet)
+    return total_params, flops.total()

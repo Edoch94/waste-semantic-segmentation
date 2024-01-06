@@ -11,6 +11,7 @@ from src.loading_data import loading_data
 
 # Disabled icecream
 ic.disable()
+
 log = logging.getLogger(__name__)
 
 
@@ -44,6 +45,7 @@ def main(cfg: DictConfig) -> None:
         val_batch_size=cfg.model.validation.input.batch_size,
         num_workers_train=cfg.model.train.num_workers,
         num_workers_val=cfg.model.validation.num_workers,
+        dataset_path=cfg.data.dataset.path,
     )
 
     # Train and validate the model

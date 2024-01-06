@@ -1,15 +1,19 @@
-# hydra:
-  # verbose: true
-  # output_subdir: null  
-  # run:
-  #   dir: .
+hydra:
+  output_subdir:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${model.name}_${model.name}__${hydra.job.num}
+
 
 gpu: [0]
+tensorboard_log_dir: tensorboard_logs
 
 defaults: # last one wins
 - _self_
 - data: data
 - model: ENet
-- version: v0.0.1
+- version: [v0.0.1, v0.0.2]
 - model_version: ${model}_${version}
 - override hydra/job_logging: custom

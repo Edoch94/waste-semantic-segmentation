@@ -15,6 +15,7 @@ from .resortit import resortit
 
 
 def loading_data(
+    dataset_path: str,
     normalization_mean: list[float],
     normalization_std: list[float],
     scaling_factor: float,
@@ -72,6 +73,7 @@ def loading_data(
         simul_transform=train_simul_transform,
         transform=img_transform,
         target_transform=target_transform,
+        dataset_path=dataset_path,
     )
     train_loader = DataLoader(
         train_set,
@@ -85,6 +87,7 @@ def loading_data(
         simul_transform=val_simul_transform,
         transform=img_transform,
         target_transform=target_transform,
+        dataset_path=dataset_path,
     )
     val_loader = DataLoader(
         val_set, batch_size=val_batch_size, num_workers=num_workers_val, shuffle=False

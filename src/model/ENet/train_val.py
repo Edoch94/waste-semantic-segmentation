@@ -1,36 +1,36 @@
 import logging
+from pathlib import Path
 
 import torch
 import torchvision.transforms as standard_transforms
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 from torch import optim
-from torch.autograd import Variable
+from torch.nn.modules.loss import BCEWithLogitsLoss, _Loss
+from torch.nn.modules.module import Module
 from torch.optim.lr_scheduler import StepLR
+from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard.writer import SummaryWriter
+from torchvision.transforms.transforms import Compose
 from tqdm.auto import trange
 
-# from tensorboardX import SummaryWriter
 from ...utils import Timer, calculate_mean_iu
 from .model import ENet
-
-# from utils import *
-
-# exp_name = cfg.TRAIN.EXP_NAME
-# log_txt = cfg.TRAIN.EXP_LOG_PATH + '/' + exp_name + '.txt'
-# writer = SummaryWriter(cfg.TRAIN.EXP_PATH+ '/' + exp_name)
 
 log = logging.getLogger(__name__)
 
 
 def ENet_main(
     cfg: DictConfig,
-    restore_transform: standard_transforms.Compose,
     train_loader: DataLoader,
     val_loader: DataLoader,
+    restore_transform: standard_transforms.Compose,
 ) -> None:
-    # Instantiating ENet
-    log.info('Instantiating ENet')
-    net = []
+    checkpoint_dir = Path(HydraConfig.get().runtime.output_dir) / 'checkpoints'
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    tensorboard_dir = Path(HydraConfig.get().runtime.output_dir) / 'tensorboard'
+    writer = SummaryWriter(tensorboard_dir)
 
     # Choose the training strategy: train complete ENet or only encoder
     if cfg.model.train.stage.encoder.totrain:
@@ -61,7 +61,7 @@ def ENet_main(
     log.info('Setting mode to train')
 
     # Setting loss function
-    criterion = torch.nn.BCEWithLogitsLoss().cuda()  # Binary Classification
+    criterion = BCEWithLogitsLoss().cuda()  # Binary Classification
     log.info(f'Setting loss function: {criterion.__class__.__name__}')
 
     # Setting optimizer
@@ -84,7 +84,7 @@ def ENet_main(
     _t = {'train time': Timer(), 'val time': Timer()}
 
     # Validate the model before training
-    mean_iu = validate(
+    mean_iu, mean_loss = validate(
         val_loader=val_loader,
         net=net,
         criterion=criterion,
@@ -92,11 +92,22 @@ def ENet_main(
         epoch=-1,
         restore=restore_transform,
     )
-    log.info(f'Validating model before training\tMean IU: {mean_iu:.4f}')
+    log.info(
+        f'Validating model before training\t Mean IU: {mean_iu:.4f}\t Mean Loss: {mean_loss:.4f}'  # noqa: E501
+    )
+    torch.save(
+        net.state_dict(),
+        f'{checkpoint_dir}/{cfg.model.name}_{cfg.model.version}__initial.pth',
+    )
+
+    writer.add_scalar('Validation/Mean IU', mean_iu, -1)
+    writer.add_scalar('Validation/Mean Loss', mean_loss, -1)
 
     # Training-validation loop
     log.info('Starting training-validation loop')
     for epoch in trange(cfg.model.train.max_epoch):
+        current_epoch = epoch + 1
+
         _t['train time'].tic()
         train(
             train_loader=train_loader,
@@ -109,7 +120,7 @@ def ENet_main(
         training_time = _t['train time'].diff
 
         _t['val time'].tic()
-        mean_iu = validate(
+        mean_iu, mean_loss = validate(
             val_loader=val_loader,
             net=net,
             criterion=criterion,
@@ -120,13 +131,22 @@ def ENet_main(
         _t['val time'].toc(average=False)
         validation_time = _t['val time'].diff
 
+        if (current_epoch) % 10 == 0:
+            torch.save(
+                net.state_dict(),
+                f'{checkpoint_dir}/{cfg.model.name}_{cfg.model.version}__epoch_{current_epoch}.pth',
+            )
+            # mlflow.log_artifact(f'{HydraConfig.get().runtime.output_dir}_epoch_{epoch}.pth')  # noqa: E501
+
         log.debug(
-            f'Epoch: {epoch}\t Training Time [s]: {training_time:.2f}\t Validation Time [s]: {validation_time:.2f}\t Mean IU: {mean_iu:.4f}'  # noqa: E501
+            f'Epoch: {epoch}\t Training Time [s]: {training_time:.2f}\t Validation Time [s]: {validation_time:.2f}\t Mean IU: {mean_iu:.4f}\t Mean Loss: {mean_loss:.4f}'  # noqa: E501
         )
+        writer.add_scalar('Validation/Mean IU', mean_iu, epoch)
+        writer.add_scalar('Validation/Mean Loss', mean_loss, epoch)
     log.info('Training-validation loop finished')
 
     # Validate the model after training
-    mean_iu = validate(
+    mean_iu, mean_loss = validate(
         val_loader=val_loader,
         net=net,
         criterion=criterion,
@@ -134,14 +154,31 @@ def ENet_main(
         epoch=cfg.model.train.max_epoch,
         restore=restore_transform,
     )
-    log.info(f'Validating model after training \tMean IU: {mean_iu:.4f}')
+    torch.save(
+        net.state_dict(),
+        f'{checkpoint_dir}/{cfg.model.name}_{cfg.model.version}__final.pth',
+    )
+
+    log.info(
+        f'Validating model after training \t Mean IU: {mean_iu:.4f}\t Mean Loss: {mean_loss:.4f}'  # noqa: E501
+    )
+    writer.add_scalar('Validation/Mean IU', mean_iu, cfg.model.train.max_epoch)
+    writer.add_scalar('Validation/Mean Loss', mean_loss, cfg.model.train.max_epoch)
+
+    writer.flush()
+    writer.close()
 
 
-def train(train_loader, net, criterion, optimizer, epoch):
-    for _i, data in enumerate(train_loader, 0):
-        inputs, labels = data
-        inputs = Variable(inputs).cuda()
-        labels = Variable(labels).cuda()
+def train(
+    train_loader: DataLoader,
+    net: Module,
+    criterion: _Loss,
+    optimizer: Optimizer,
+    epoch: int,
+) -> None:
+    for inputs, labels in train_loader:
+        inputs = inputs.cuda()
+        labels = labels.cuda()
 
         optimizer.zero_grad()
         outputs = net(inputs)
@@ -150,16 +187,20 @@ def train(train_loader, net, criterion, optimizer, epoch):
         optimizer.step()
 
 
-def validate(val_loader, net, criterion, optimizer, epoch, restore):
-    net.eval()
-    criterion.cpu()
-    iou_ = 0.0
-    for _vi, data in enumerate(val_loader, 0):
-        inputs, labels = data
-
-        with torch.no_grad():
-            inputs = Variable(inputs).cuda()
-            labels = Variable(labels).cuda()
+def validate(
+    val_loader: DataLoader,
+    net: Module,
+    criterion: _Loss,
+    optimizer: Optimizer,
+    epoch: int,
+    restore: Compose,
+) -> tuple[float, float]:
+    with net.eval() and criterion.cpu() and torch.no_grad():
+        iou_ = 0.0
+        loss_ = 0.0
+        for inputs, labels in val_loader:
+            inputs = inputs.cuda()
+            labels = labels.cuda()
             outputs = net(inputs)
             # for binary classification
             outputs[outputs > 0.5] = 1
@@ -171,11 +212,9 @@ def validate(val_loader, net, criterion, optimizer, epoch, restore):
                 gts=[labels.data.cpu().numpy()],
                 num_classes=2,
             )
+            loss_ += criterion(outputs, labels.float())
 
-    mean_iu = iou_ / len(val_loader)
+        mean_iu = iou_ / len(val_loader)
+        mean_loss = loss_ / len(val_loader)
 
-    net.train()
-    criterion.cuda()
-
-    # print('[mean iu %.4f]' % (mean_iu))
-    return mean_iu
+    return mean_iu, mean_loss

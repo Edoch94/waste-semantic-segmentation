@@ -9,3 +9,4 @@ img_size: [224, 448]
 
 defaults:
 - dataset: dataset_simple
+# - dataset: dataset_complete
